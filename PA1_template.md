@@ -57,6 +57,10 @@ library(ggplot2)
 ## Warning: package 'ggplot2' was built under R version 3.1.3
 ```
 
+```
+## Use suppressPackageStartupMessages to eliminate package startup messages.
+```
+
 ```r
 library(dplyr)
 ```
@@ -263,8 +267,8 @@ diff_median_steps = abs(new_median_steps - median_steps)
 ans = ifelse(diff_mean_steps != 0 | diff_median_steps != 0, "Yes", "No")
 thres3 <- data.frame(Thresholds="Mean", vals = mean(daily_grouped_imputed_data$total_step_day))
 thres4 <- data.frame(Thresholds="Median", vals = median(daily_grouped_imputed_data$total_step_day))
-thres <- rbind(thres3,thres4)
-thres
+thres5 <- rbind(thres3,thres4)
+thres5
 ```
 
 ```
@@ -276,7 +280,7 @@ thres
 ```r
 p <- ggplot(data=daily_grouped_imputed_data, aes(daily_grouped_imputed_data$total_step_day)) + 
      geom_histogram() + 
-     geom_vline(data=thres, aes(xintercept=vals, linetype=Thresholds, color=Thresholds, show_guide=TRUE)) +
+     geom_vline(data=thres5, aes(xintercept=vals, linetype=Thresholds, color=Thresholds, show_guide=TRUE)) +
      xlab("Total Number of Steps per Day") + 
      ggtitle("Histogram of Total Number of Steps per Day")
 

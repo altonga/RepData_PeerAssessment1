@@ -252,6 +252,9 @@ Process data to add other variables:</p>
 <pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 3.1.3
 </code></pre>
 
+<pre><code>## Use suppressPackageStartupMessages to eliminate package startup messages.
+</code></pre>
+
 <pre><code class="r">library(dplyr)
 </code></pre>
 
@@ -444,8 +447,8 @@ diff_median_steps = abs(new_median_steps - median_steps)
 ans = ifelse(diff_mean_steps != 0 | diff_median_steps != 0, &quot;Yes&quot;, &quot;No&quot;)
 thres3 &lt;- data.frame(Thresholds=&quot;Mean&quot;, vals = mean(daily_grouped_imputed_data$total_step_day))
 thres4 &lt;- data.frame(Thresholds=&quot;Median&quot;, vals = median(daily_grouped_imputed_data$total_step_day))
-thres &lt;- rbind(thres3,thres4)
-thres
+thres5 &lt;- rbind(thres3,thres4)
+thres5
 </code></pre>
 
 <pre><code>##   Thresholds     vals
@@ -455,7 +458,7 @@ thres
 
 <pre><code class="r">p &lt;- ggplot(data=daily_grouped_imputed_data, aes(daily_grouped_imputed_data$total_step_day)) + 
      geom_histogram() + 
-     geom_vline(data=thres, aes(xintercept=vals, linetype=Thresholds, color=Thresholds, show_guide=TRUE)) +
+     geom_vline(data=thres5, aes(xintercept=vals, linetype=Thresholds, color=Thresholds, show_guide=TRUE)) +
      xlab(&quot;Total Number of Steps per Day&quot;) + 
      ggtitle(&quot;Histogram of Total Number of Steps per Day&quot;)
 
