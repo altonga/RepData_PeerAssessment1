@@ -1,16 +1,21 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: html_document
-keep_md: true
+output: 
+    html_document:
+        keep_md: true
 ---
 
 
 ## Loading and preprocessing the data
-Define a function to read a zip file.
-Call the function on "activity.zip"
-idata contains unprocessed data
 
-```{r load, echo=TRUE}
+1. Load the data (i.e. read.csv())
+
+Define a function to read a zip file.
+Call the function on "activity.zip". The assumption is that "activity.zip" is present in current working directory.
+
+idata contains unprocessed data.
+
+```{r load_data, echo=TRUE}
 readData <- function(file) {
 zipFileInfo <- unzip(file, list=TRUE)
 if(nrow(zipFileInfo) > 1)
@@ -25,12 +30,15 @@ idata<-readData("activity.zip")
 summary(idata)
 ```
 
+2. Process/transform the data (if necessary) into a format suitable for your analysis
+
 Load the ggplot2 and dplyr libraries. 
 Process data to add other variables:
-- hour: Hour of day (0-23)
-- startint: Interval start within hour (0-55 in steps of 5)
-- hrindex: Index of interval within hour (1-12)
-- dayindex: Index of interval within day (1-288)
+
+* hour: Hour of day (0-23)
+* startint: Interval start within hour (0-55 in steps of 5)
+* hrindex: Index of interval within hour (1-12)
+* dayindex: Index of interval within day (1-288)
 
 ```{r process_data, echo=TRUE}
 library(ggplot2)
@@ -41,50 +49,46 @@ pdata$hour <- pdata$interval %/% 100
 pdata$startint <- pdata$interval %% 100
 pdata$hrindex <- (pdata$startint / 5) + 1 
 pdata$dayindex <- pdata$hrindex + (pdata$hour * 12)
-pdata[1:300,]
 ddata <- tbl_df(pdata)
 
-head(ddata)
 gdata <- group_by(ddata, date)
-gdata[1:20,]
-tdata<-summarize(gdata, mean_step_day = mean(steps, na.rm = TRUE), total_step_day = sum(steps, na.rm = TRUE))
-tdata[1:60,]
-qplot(date, data=tdata, weight=mean_step_day, geom="histogram")
 
 ```
 
 
 ## What is mean total number of steps taken per day?
-Calculate the total number of steps taken per day
+
+1. Calculate the total number of steps taken per day
 
 ```{r total} 
 tdata<-summarize(gdata, mean_step_day = mean(steps, na.rm = TRUE), total_step_day = sum(steps, na.rm = TRUE))
-tdata[1:60,]
+tdata[1:61,]
 ```
 
-Make a histogram of the total number of steps taken each day.
-
-```{r hist}
-
-qplot(date, data=tdata, weight=mean_step_day, geom="histogram")
-qplot(total_step_day, data=tdata, geom="histogram")
-```
-
-Calculate and report mean and median of the total number of steps taken per day.
+3. Calculate and report mean and median of the total number of steps taken per day.
 
 ```{r mean}
 
 mean_steps <- mean(tdata$total_step_day)
 median_steps <- median(tdata$total_step_day)
-mean_steps
-median_steps
+```
+Mean of total number of steps per day is `r mean_steps`.
 
+Median of total number of steps per day is `r median_steps`.
+
+2. Make a histogram of the total number of steps taken each day
+
+```{r hist}
 thres1 <- data.frame(Thresholds="Mean", vals = mean(tdata$total_step_day))
 thres2 <- data.frame(Thresholds="Median", vals = median(tdata$total_step_day))
 thres <- rbind(thres1,thres2)
 thres
 
-p<-ggplot(data=tdata, aes(tdata$total_step_day))+ geom_histogram() + geom_vline(data=thres, aes(xintercept=vals, linetype=Thresholds, color=Thresholds))
+p <- ggplot(data=tdata, aes(tdata$total_step_day)) + 
+     geom_histogram() + 
+     geom_vline(data=thres, aes(xintercept=vals, linetype=Thresholds, color=Thresholds), show_guide=TRUE) + 
+     xlab("Total Number of Steps per Day") +
+     ggtitle("Total Number of Steps per Day") 
 p    
 ```
 
