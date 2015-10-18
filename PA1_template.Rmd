@@ -1,25 +1,184 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+output: html_document
+keep_md: true
 ---
 
 
 ## Loading and preprocessing the data
+Define a function to read a zip file.
+Call the function on "activity.zip"
+idata contains unprocessed data
 
+```{r load, echo=TRUE}
+readData <- function(file) {
+zipFileInfo <- unzip(file, list=TRUE)
+if(nrow(zipFileInfo) > 1)
+  stop("More than one data file inside zip")
+else
+  read.csv(unz(file, as.character(zipFileInfo$Name)), head=TRUE)
+}
+
+idata<-readData("activity.zip")
+```
+```{r echo=FALSE,results='hide'}
+summary(idata)
+```
+
+Load the ggplot2 and dplyr libraries. 
+Process data to add other variables:
+- hour: Hour of day (0-23)
+- startint: Interval start within hour (0-55 in steps of 5)
+- hrindex: Index of interval within hour (1-12)
+- dayindex: Index of interval within day (1-288)
+
+```{r process_data, echo=TRUE}
+library(ggplot2)
+library(dplyr)
+
+pdata <-idata
+pdata$hour <- pdata$interval %/% 100
+pdata$startint <- pdata$interval %% 100
+pdata$hrindex <- (pdata$startint / 5) + 1 
+pdata$dayindex <- pdata$hrindex + (pdata$hour * 12)
+pdata[1:300,]
+ddata <- tbl_df(pdata)
+
+head(ddata)
+gdata <- group_by(ddata, date)
+gdata[1:20,]
+tdata<-summarize(gdata, mean_step_day = mean(steps, na.rm = TRUE), total_step_day = sum(steps, na.rm = TRUE))
+tdata[1:60,]
+qplot(date, data=tdata, weight=mean_step_day, geom="histogram")
+
+```
 
 
 ## What is mean total number of steps taken per day?
+Calculate the total number of steps taken per day
 
+```{r total} 
+tdata<-summarize(gdata, mean_step_day = mean(steps, na.rm = TRUE), total_step_day = sum(steps, na.rm = TRUE))
+tdata[1:60,]
+```
+
+Make a histogram of the total number of steps taken each day.
+
+```{r hist}
+
+qplot(date, data=tdata, weight=mean_step_day, geom="histogram")
+qplot(total_step_day, data=tdata, geom="histogram")
+```
+
+Calculate and report mean and median of the total number of steps taken per day.
+
+```{r mean}
+
+mean_steps <- mean(tdata$total_step_day)
+median_steps <- median(tdata$total_step_day)
+mean_steps
+median_steps
+
+thres1 <- data.frame(Thresholds="Mean", vals = mean(tdata$total_step_day))
+thres2 <- data.frame(Thresholds="Median", vals = median(tdata$total_step_day))
+thres <- rbind(thres1,thres2)
+thres
+
+p<-ggplot(data=tdata, aes(tdata$total_step_day))+ geom_histogram() + geom_vline(data=thres, aes(xintercept=vals, linetype=Thresholds, color=Thresholds))
+p    
+```
 
 
 ## What is the average daily activity pattern?
+```{r average_daily_activity}
+da <- group_by(ddata, dayindex)
+dadata<-summarize(da, mean_step_interval = mean(steps, na.rm = TRUE), total_step_interval = sum(steps, na.rm = TRUE))
+dadata[1:300,]
+ggplot(data=dadata, aes(x=dadata$dayindex, y = dadata$mean_step_interval))+geom_line()
+```
 
-
+```{r max_int}
+max_interval_indx = which.max(dadata$mean_step_interval)
+max_interval = da[dadata$dayindex == max_interval_indx, 3]
+mi <- max_interval[1,]
+mi
+```
+The 5-min interval, on average across all the days, containing max steps steps is `r mi`.
 
 ## Imputing missing values
 
+```{r na}
+incomplete_rows <- sum(!complete.cases(idata))
+incomplete_rows
+```
+```{r replace_na}
+imputed <- idata
+t<-nrow(imputed)
+for (i in 1:t) {
+    k <- i %% 288
+    if (k == 0) {
+        k <- 288
+    }
+    if (is.na(imputed$steps[i])) {
+        
+        prow <- imputed[i,]
+        imputed[i, 1] = as.integer(round(dadata$mean_step_interval[k]))
+    } 
+}
+```
+
+```{r new_hist}
+imputed_data <- tbl_df(imputed)
+
+head(imputed_data)
+grouped_imputed_data <- group_by(imputed_data, date)
+grouped_imputed_data[1:20,]
+daily_grouped_imputed_data<-summarize(grouped_imputed_data, mean_step_day = mean(steps, na.rm = TRUE), total_step_day = sum(steps, na.rm = TRUE))
+daily_grouped_imputed_data[1:60,]
+
+qplot(total_step_day, data=daily_grouped_imputed_data, geom="histogram")
+```
+
+
+```{r new_mean}
+
+mean_steps <- mean(daily_grouped_imputed_data$total_step_day)
+median_steps <- median(daily_grouped_imputed_data$total_step_day)
+mean_steps
+median_steps
+
+thres3 <- data.frame(Thresholds="Mean", vals = mean(daily_grouped_imputed_data$total_step_day))
+thres4 <- data.frame(Thresholds="Median", vals = median(daily_grouped_imputed_data$total_step_day))
+thres <- rbind(thres3,thres4)
+thres
+
+p<-ggplot(data=daily_grouped_imputed_data, aes(daily_grouped_imputed_data$total_step_day))+ geom_histogram() + geom_vline(data=thres, aes(xintercept=vals, linetype=Thresholds, color=Thresholds))
+p    
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+daily_grouped_imputed_data_weekday <- mutate(daily_grouped_imputed_data, day = weekdays(as.Date(date)))
+daily_grouped_imputed_data_weekday_f <- mutate(daily_grouped_imputed_data_weekday, wd = ifelse(day == "Saturday"| day == "Sunday", 0, 1))
+daily_grouped_imputed_data_weekday_f
+daily_grouped_imputed_data_weekday_f$wd <-factor(daily_grouped_imputed_data_weekday_f$wd)
+
+p<-ggplot(data=daily_grouped_imputed_data_weekday_f, aes(daily_grouped_imputed_data_weekday_f$total_step_day))+ geom_histogram() +  facet_grid(wd ~ .)
+p    
+
+```
+
+
+```{r}
+imputed_data_day <- mutate(imputed_data, day = weekdays(as.Date(date)))
+imputed_data_day_wd <- mutate(imputed_data_day, wd = ifelse(day == "Saturday"| day == "Sunday", "Weekend", "Weekday"))
+imputed_data_day_wd$wd <- factor(imputed_data_day_wd$wd)
+
+imputed_data_day_wd_hrindex <- mutate(imputed_data_day_wd, hrindex = ((interval %% 100)/5)+1)
+imputed_data_day_wd_hrindex_summarized <- imputed_data_day_wd_hrindex %>% group_by(wd, interval) %>% summarize(avgSteps = mean(steps))
+imputed_data_day_wd_hrindex_summarized[1:300, ]
+nrow(imputed_data_day_wd_hrindex_summarized)
+q<-ggplot(data=imputed_data_day_wd_hrindex_summarized, aes(interval, avgSteps)) + geom_line() + facet_grid(wd ~ .)
+q    
+```
