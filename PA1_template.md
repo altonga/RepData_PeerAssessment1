@@ -12,7 +12,7 @@ It can also be converted through R interpreter in console. That requires followi
 ```r
 require(knitr)
 require(markdown)
-knit2html(PA1_template.Rmd)
+knit2html("PA1_template.Rmd")
 ```
 
 ## Loading and preprocessing the data
