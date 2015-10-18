@@ -57,10 +57,6 @@ library(ggplot2)
 ## Warning: package 'ggplot2' was built under R version 3.1.3
 ```
 
-```
-## Use suppressPackageStartupMessages to eliminate package startup messages.
-```
-
 ```r
 library(dplyr)
 ```
@@ -280,7 +276,7 @@ thres5
 ```r
 p <- ggplot(data=daily_grouped_imputed_data, aes(daily_grouped_imputed_data$total_step_day)) + 
      geom_histogram() + 
-     geom_vline(data=thres5, aes(xintercept=vals, linetype=Thresholds, color=Thresholds, show_guide=TRUE)) +
+     geom_vline(data=thres5, aes(xintercept=vals, linetype=Thresholds, color=Thresholds), show_guide=TRUE) +
      xlab("Total Number of Steps per Day") + 
      ggtitle("Histogram of Total Number of Steps per Day")
 

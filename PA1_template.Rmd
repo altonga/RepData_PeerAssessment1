@@ -197,7 +197,7 @@ thres5
 
 p <- ggplot(data=daily_grouped_imputed_data, aes(daily_grouped_imputed_data$total_step_day)) + 
      geom_histogram() + 
-     geom_vline(data=thres5, aes(xintercept=vals, linetype=Thresholds, color=Thresholds, show_guide=TRUE)) +
+     geom_vline(data=thres5, aes(xintercept=vals, linetype=Thresholds, color=Thresholds), show_guide=TRUE) +
      xlab("Total Number of Steps per Day") + 
      ggtitle("Histogram of Total Number of Steps per Day")
 
